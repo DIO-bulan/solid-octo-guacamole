@@ -6,6 +6,26 @@
     <title>Coin Flip Simulation</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+    <script>
+    const worker = new Worker('worker.js');
+
+    worker.onmessage = function(event) {
+        const { threeInARowProbs, fourInARowProbs, fiveInARowProbs } = event.data;
+
+        data.labels = Array.from({ length: threeInARowProbs.length }, (_, i) => i + 1);
+        data.datasets[0].data = threeInARowProbs.map((y, x) => ({ x: x + 1, y }));
+        data.datasets[1].data = fourInARowProbs.map((y, x) => ({ x: x + 1, y }));
+        data.datasets[2].data = fiveInARowProbs.map((y, x) => ({ x: x + 1, y }));
+        myChart.update();
+    };
+
+    function simulateCoinFlips(numFlips, numSimulations) {
+        worker.postMessage({ numFlips, numSimulations });
+    }
+
+    simulateCoinFlips(20, 1000);
+</script>
+
     <style>
         canvas {
             display: block;
