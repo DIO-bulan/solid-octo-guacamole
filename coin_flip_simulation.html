@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coin Flip Simulation</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+    <style>
+        canvas {
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Coin Flip Simulation</h1>
+    <canvas id="myChart" width="800" height="400"></canvas>
+    <button onclick="resetZoom()">Reset Zoom</button>
+    <script>
+        const ctx = document.getElementById('myChart').getContext('2d');
+        const data = {
+            labels: [],
+            datasets: [
+                {
+                    label: '3 in a row',
+                    borderColor: 'blue',
+                    data: [],
+                    fill: false,
+                },
+                {
+                    label: '4 in a row',
+                    borderColor: 'green',
+                    data: [],
+                    fill: false,
+                },
+                {
+                    label: '5 in a row',
+                    borderColor: 'red',
+                    data: [],
+                    fill: false,
+                }
+            ]
+        };
+    
+        const config = {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        min:0,
+                        max:1000,
+                        beginAtZero: true
+                    },
+                    y: {
+                        min:0,
+                        max:1,
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    zoom: {
+                        pan: {
+                            enabled: true,
+                            mode: 'x',
+                        },
+                        zoom: {
+                            wheel: {
+                                enabled: true,
+                            },
+                            pinch: {
+                                enabled: true
+                            },
+                            mode: 'x',
+                            limits: {
+                                x: { min: 0 },
+                                y: { min: 0 }
+                            }
+                        }
+                    }
+                }
+                
+            }
+        };
+    
+        const myChart = new Chart(ctx, config);
+    
+        function simulateCoinFlips(numFlips, numSimulations) {
+            const threeInARowProbs = [];
+            const fourInARowProbs = [];
+            const fiveInARowProbs = [];
+            
+            function simulateBatch(start, end) {
+                for (let i = start; i <= end; i++) {
+                    let threeInARow = 0;
+                    let fourInARow = 0;
+                    let fiveInARow = 0;
+                    for (let j = 0; j < i; j++) {
+                        const flips = Array.from({ length: numFlips }, () => Math.random() < 0.5 ? 'H' : 'T').join('');
+                        if (flips.includes('HHH') || flips.includes('TTT')) threeInARow++;
+                        if (flips.includes('HHHH') || flips.includes('TTTT')) fourInARow++;
+                        if (flips.includes('HHHHH') || flips.includes('TTTTT')) fiveInARow++;
+                    }
+                    threeInARowProbs.push(threeInARow / i);
+                    fourInARowProbs.push(fourInARow / i);
+                    fiveInARowProbs.push(fiveInARow / i);
+                    
+                    data.labels.push(i);
+                    data.datasets[0].data.push({ x: i, y: threeInARowProbs[i-1] });
+                    data.datasets[1].data.push({ x: i, y: fourInARowProbs[i-1] });
+                    data.datasets[2].data.push({ x: i, y: fiveInARowProbs[i-1] });
+                    myChart.update();
+                }
+            }
+            
+            function loadSimulations(batchSize) {
+                let currentBatch = 0;
+                const interval = setInterval(() => {
+                    const start = currentBatch * batchSize + 1;
+                    const end = (currentBatch + 1) * batchSize;
+                    if (start > numSimulations) {
+                        clearInterval(interval);
+                    } else {
+                        simulateBatch(start, Math.min(end, numSimulations));
+                        currentBatch++;
+                    }
+                }, 100); // Adjust the interval time as needed
+            }
+            
+            loadSimulations(100);
+        }
+    
+        function resetZoom() {
+            myChart.resetZoom();
+        }
+    
+        simulateCoinFlips(20, 1000);
+    </script>
+    
+</body>
+</html>
